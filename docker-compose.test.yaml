@@ -1,0 +1,24 @@
+services:
+  database:
+    image: postgres:16-alpine
+    # command: ["postgres", "-c", "log_statement=all"]
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  test:
+    image: golang:1.24
+    links:
+      - database
+    volumes:
+      - ".:/src"
+    environment:
+      TEST_DB: "postgres://test:test@database/test?sslmode=disable"
+    working_dir: "/src"
+    command: "go test ./..."
