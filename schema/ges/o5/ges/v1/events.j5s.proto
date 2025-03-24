@@ -66,12 +66,12 @@ message Upsert {
     (j5.ext.v1.field).string = {}
   ];
 
-  string event_id = 3 [
+  string last_event_id = 3 [
     (buf.validate.field).required = true,
     (j5.ext.v1.field).string = {}
   ];
 
-  google.protobuf.Timestamp timestamp = 4 [
+  google.protobuf.Timestamp last_event_timestamp = 4 [
     (buf.validate.field).required = true,
     (j5.ext.v1.field).timestamp = {}
   ];

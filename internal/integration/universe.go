@@ -9,6 +9,7 @@ import (
 	"github.com/pentops/flowtest"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
 	"github.com/pentops/ges/internal/service"
+	"github.com/pentops/j5/j5types/any_j5t"
 	"github.com/pentops/j5/lib/j5codec"
 	"github.com/pentops/log.go/log"
 	"github.com/pentops/o5-messaging/gen/o5/messaging/v1/messaging_pb"
@@ -17,6 +18,7 @@ import (
 	"github.com/pentops/o5-messaging/outbox/outboxtest"
 	"github.com/pentops/pgtest.go/pgtest"
 	"github.com/pentops/sqrlx.go/sqrlx"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -114,5 +116,16 @@ func (uu *Universe) HandleGeneric(ctx context.Context, t flowtest.TB, msg o5msg.
 	})
 	if err != nil {
 		t.Fatalf("failed to send message: %v", err)
+	}
+}
+
+func (uu *Universe) DecodeAnyTo(t flowtest.TB, input *any_j5t.Any, output proto.Message) {
+	t.Helper()
+	if input == nil {
+		t.Fatalf("input any is nil")
+	}
+	err := uu.Codec.DecodeAnyTo(input, output)
+	if err != nil {
+		t.Fatalf("failed to decode any: %v", err)
 	}
 }

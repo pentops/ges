@@ -24,10 +24,13 @@ service Query {
 		httpPath = "/upsert"
 
 		request {
+			field page object:j5.list.v1.PageRequest
+			field query object:j5.list.v1.QueryRequest
 		}
 
 		response {
-			field events array:object:Event
+			field page object:j5.list.v1.PageResponse
+			field events array:object:Upsert
 		}
 	}
 
@@ -50,7 +53,7 @@ object Upsert {
 	field entity_name ! string
 	field entity_id ! string
 
-	field event_id ! string
-	field timestamp ! timestamp
+	field last_event_id ! string
+	field last_event_timestamp ! timestamp
 	field data ! any
 }

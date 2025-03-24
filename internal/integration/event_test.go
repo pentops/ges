@@ -9,9 +9,7 @@ import (
 	"github.com/pentops/ges/internal/gen/gestest/v1/gestest_tpb"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
 	"github.com/pentops/j5/gen/j5/state/v1/psm_j5pb"
-	"github.com/pentops/j5/j5types/any_j5t"
 	"github.com/pentops/j5/lib/id62"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -67,15 +65,4 @@ func TestEventCycle(t *testing.T) {
 
 	})
 
-}
-
-func (uu *Universe) DecodeAnyTo(t flowtest.TB, input *any_j5t.Any, output proto.Message) {
-	t.Helper()
-	if input == nil {
-		t.Fatalf("input any is nil")
-	}
-	err := uu.Codec.DecodeAnyTo(input, output)
-	if err != nil {
-		t.Fatalf("failed to decode any: %v", err)
-	}
 }

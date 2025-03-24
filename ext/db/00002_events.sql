@@ -7,7 +7,18 @@ CREATE TABLE event (
   data jsonb NOT NULL
 );
 
+CREATE TABLE upsert (
+  entity_name text NOT NULL,
+  entity_id text NOT NULL,
+  last_event_id text NOT NULL,
+  last_event_timestamp timestamptz NOT NULL,
+  data jsonb NOT NULL,
+
+  PRIMARY KEY (entity_name, entity_id)
+);
+
 
 -- +goose Down
 
 DROP TABLE event;
+DROP TABLE upsert;

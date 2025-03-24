@@ -38,10 +38,16 @@ message EventsListResponse {
 
 message UpsertListRequest {
   option (j5.ext.v1.message).object = {};
+
+  j5.list.v1.PageRequest page = 1 [(j5.ext.v1.field).object = {}];
+
+  j5.list.v1.QueryRequest query = 2 [(j5.ext.v1.field).object = {}];
 }
 
 message UpsertListResponse {
   option (j5.ext.v1.message).object = {};
 
-  repeated o5.ges.v1.Event events = 1 [(j5.ext.v1.field).array = {}];
+  j5.list.v1.PageResponse page = 1 [(j5.ext.v1.field).object = {}];
+
+  repeated o5.ges.v1.Upsert events = 2 [(j5.ext.v1.field).array = {}];
 }
