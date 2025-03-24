@@ -1,0 +1,56 @@
+package o5.ges.v1
+
+service Query {
+
+	basePath = "/ges/v1"
+
+	method EventsList {
+		httpMethod = "GET"
+		httpPath = "/events"
+
+		request {
+			field page object:j5.list.v1.PageRequest
+			field query object:j5.list.v1.QueryRequest
+		}
+
+		response {
+			field page object:j5.list.v1.PageResponse
+			field events array:object:Event
+		}
+	}
+
+	method UpsertList {
+		httpMethod = "GET"
+		httpPath = "/upsert"
+
+		request {
+		}
+
+		response {
+			field events array:object:Event
+		}
+	}
+
+}
+
+object Event {
+	field id ! string
+	field entity_name ! string
+
+	field sequence ! integer:UINT64
+	field timestamp ! timestamp
+	field event_type ! string
+
+	field entity_keys ! any
+	field event_data ! any
+	field entity_state ! any
+}
+
+object Upsert {
+	field entity_name ! string
+	field entity_id ! string
+
+	field event_id ! string
+	field timestamp ! timestamp
+	field data ! any
+}

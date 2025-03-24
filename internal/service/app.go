@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/pentops/grpc.go/protovalidatemw"
 	"github.com/pentops/log.go/grpc_log"
 	"github.com/pentops/log.go/log"
@@ -14,8 +16,12 @@ type App struct {
 }
 
 func NewApp(db sqrlx.Transactor) (*App, error) {
+	qs, err := NewQueryService(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query service: %w", err)
+	}
 	app := &App{
-		QueryService: NewQueryService(db),
+		QueryService: qs,
 		EventWorker:  NewEventWorker(db),
 	}
 	return app, nil

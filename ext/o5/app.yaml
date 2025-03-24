@@ -4,13 +4,33 @@ name: "ges"
 deploymentConfig:
   quickMode: true
 
+databases:
+  - name: main
+    postgres:
+      runOutbox: true
+      serverGroup: default
+      dbExtensions:
+        - "uuid-ossp"
+
+      migrateContainer:
+        image:
+          name: ges
+          registry: ghcr.io/pentops
+        command: [migrate]
+        envVars:
+          - name: "POSTGRES_URL"
+            database:
+              databaseName: main
+
 runtimes:
   - name: main
     routes: []
 
     subscriptions:
       - name: "global/event"
+        envName: "*"
       - name: "global/upsert"
+        envName: "*"
 
     containers:
       - name: main

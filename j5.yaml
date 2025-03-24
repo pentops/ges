@@ -1,0 +1,57 @@
+---
+bundles:
+  - name: ges
+    dir: schema/ges
+  - name: test
+    dir: schema/test
+
+generate:
+  - name: go
+    inputs:
+      - local: ges
+      - local: test
+    output: .
+    mods:
+      - goPackageNames: 
+          prefix: github.com/pentops/ges/internal/gen
+
+    opts:
+      paths: import
+      module: github.com/pentops/ges
+
+    plugins:
+      - base: go
+      - base: go-sugar
+      - base: go-grpc
+      - base: go-psm
+      - base: go-o5-messaging
+
+managedPaths:
+  - internal/gen
+
+plugins:
+  - name: go
+    type: PLUGIN_PROTO
+    docker:
+      image: ghcr.io/pentops/protoc-gen-go:v1.32.0
+
+  - base: go
+    name: go-grpc
+    docker:
+      image: ghcr.io/pentops/protoc-gen-go-grpc:v1.3.0
+
+  - base: go
+    name: go-sugar
+    docker:
+      image: ghcr.io/pentops/protoc-gen-go-sugar:b1e769eeea97192209ab5a4e8fc560bf72ce5ba7
+
+  - base: go
+    name: go-o5-messaging
+    docker:
+      image: ghcr.io/pentops/protoc-gen-go-o5-messaging:de51c0e702a323018fbce11df5cef4075b729e50
+
+  - base: go
+    name: go-psm
+    docker:
+      image: ghcr.io/pentops/protoc-gen-go-protostate:5d0574ed788c9c203c8f6935db30856aa35ac9bf
+

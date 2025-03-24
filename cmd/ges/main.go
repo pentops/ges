@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/pentops/ges/service"
+	"github.com/pentops/ges/internal/service"
 	"github.com/pentops/log.go/log"
 	"github.com/pentops/runner/commander"
 	"github.com/pentops/sqrlx.go/sqrlx"

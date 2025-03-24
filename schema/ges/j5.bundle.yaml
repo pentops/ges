@@ -1,0 +1,20 @@
+
+---
+
+registry:
+  owner: pentops
+  name: ges
+
+options:
+  subPackages:
+    - name: service
+    - name: topic
+
+packages:
+  - label: O5 Event Stream
+    name: o5.ges.v1
+
+dependencies:
+  - registry:
+      owner: pentops
+      name: messaging
