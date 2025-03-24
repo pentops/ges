@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pentops/flowtest"
+	"github.com/pentops/flowtest/prototest"
 	"github.com/pentops/ges/internal/gen/gestest/v1/gestest_tpb"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
 	"github.com/pentops/j5/gen/j5/messaging/v1/messaging_j5pb"
@@ -82,6 +83,8 @@ func TestUpsertCycle(t *testing.T) {
 		fullMsg := &gestest_tpb.FooSummaryMessage{}
 		uu.DecodeAnyTo(t, evt.Data, fullMsg)
 		t.Equal("Evt2", fullMsg.Name)
+
+		prototest.AssertEqualProto(t, event2, fullMsg)
 
 	})
 
