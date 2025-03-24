@@ -90,8 +90,8 @@ github.com/pentops/protostate v0.0.0-20250324023023-a72be074893a h1:McYzPZe27mgX
 github.com/pentops/protostate v0.0.0-20250324023023-a72be074893a/go.mod h1:PlsKWhiFeu2wWWnF5prWIThY6eNNL3ggvS1XSACrSEQ=
 github.com/pentops/runner v0.0.0-20250116202335-8635b2a42547 h1:PFKl3Fo73gT208bXmeoIsF58QotFhwNSSOK/vGa8b2s=
 github.com/pentops/runner v0.0.0-20250116202335-8635b2a42547/go.mod h1:hzPLosxy6O/1qjLUyt9lzE2M1Re/ASxmrErHbImXgNk=
-github.com/pentops/sqrlx.go v0.0.0-20250311214744-b204f2494556 h1:fOZt63TP/8kECiBA9jzeyypsEpzXyVOdpzqxFyOZACc=
-github.com/pentops/sqrlx.go v0.0.0-20250311214744-b204f2494556/go.mod h1:NbTT6iE1DismL2BeL2udw0F4jjOE9gE0VNdsssMKFO0=
+github.com/pentops/sqrlx.go v0.0.0-20250324231942-5f3ef6c21f8e h1:1CZQsGPyYJTGS7uNsT6H3Yy69oi4T2QbkbEaUiNQ9js=
+github.com/pentops/sqrlx.go v0.0.0-20250324231942-5f3ef6c21f8e/go.mod h1:NbTT6iE1DismL2BeL2udw0F4jjOE9gE0VNdsssMKFO0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

@@ -17,7 +17,7 @@ require (
 	github.com/pentops/pgtest.go v0.0.0-20241223222214-7638cc50e15b
 	github.com/pentops/protostate v0.0.0-20250324023023-a72be074893a
 	github.com/pentops/runner v0.0.0-20250116202335-8635b2a42547
-	github.com/pentops/sqrlx.go v0.0.0-20250311214744-b204f2494556
+	github.com/pentops/sqrlx.go v0.0.0-20250324231942-5f3ef6c21f8e
 	github.com/pressly/goose v2.7.0+incompatible
 	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4
 	google.golang.org/grpc v1.71.0
