@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"net"
 	"time"
 
 	"github.com/pentops/ges/internal/service"
+	"github.com/pentops/grpc.go/grpcbind"
 	"github.com/pentops/log.go/log"
 	"github.com/pentops/runner/commander"
 	"github.com/pentops/sqrlx.go/sqrlx"
@@ -23,7 +22,6 @@ func main() {
 
 	cmdGroup.Add("serve", commander.NewCommand(runServe))
 	cmdGroup.Add("migrate", commander.NewCommand(runMigrate))
-	cmdGroup.Add("watch", commander.NewCommand(runWatch))
 
 	cmdGroup.RunMain("registry", Version)
 }
@@ -41,13 +39,8 @@ func runMigrate(ctx context.Context, cfg struct {
 	return goose.Up(db, "/migrations")
 }
 
-func runWatch(ctx context.Context, cfg struct {
-}) error {
-	return nil
-}
-
 func runServe(ctx context.Context, cfg struct {
-	GRPCPort int `env:"GRPC_PORT" default:"8080"`
+	GRPCBind string `env:"GRPC_BIND" default:":8080"`
 	DBConfig
 }) error {
 
@@ -68,18 +61,7 @@ func runServe(ctx context.Context, cfg struct {
 	app.RegisterGRPC(grpcServer)
 	reflection.Register(grpcServer)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPCPort))
-	if err != nil {
-		return err
-	}
-	log.WithField(ctx, "port", cfg.GRPCPort).Info("Begin Worker Server")
-	go func() {
-		<-ctx.Done()
-		grpcServer.GracefulStop() // nolint:errcheck
-	}()
-
-	return grpcServer.Serve(lis)
-
+	return grpcbind.ListenAndServe(ctx, grpcServer, cfg.GRPCBind)
 }
 
 type DBConfig struct {
