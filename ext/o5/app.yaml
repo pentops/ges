@@ -49,6 +49,6 @@ runtimes:
             database:
               databaseName: main
 
-          - name: GRPC_PORT
-            value: "8080"
+          - name: GRPC_BIND
+            value: ":8080"
 

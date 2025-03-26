@@ -10,8 +10,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/pentops/flowtest v0.0.0-20241110231021-42663ac00b63
 	github.com/pentops/golib v0.0.0-20250107012216-1b5307b3bfe0
-	github.com/pentops/grpc.go v0.0.0-20250304234535-387f5d75a9c3
-	github.com/pentops/j5 v0.0.0-20250324042848-a1db7999e76c
+	github.com/pentops/grpc.go v0.0.0-20250326042738-bcdfc2b43fa9
+	github.com/pentops/j5 v0.0.0-20250326000307-24e2adf77e8e
 	github.com/pentops/log.go v0.0.15
 	github.com/pentops/o5-messaging v0.0.0-20250317182016-de51c0e702a3
 	github.com/pentops/pgtest.go v0.0.0-20241223222214-7638cc50e15b
