@@ -1,0 +1,4 @@
+---
+packages:
+  - label: O5 Test
+    name: gestest.v1

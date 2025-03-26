@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GOLANG_CI_VERSION: '1.64'
+
+jobs:
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: golangci/golangci-lint-action@v6
+        name: "GolangCI-Lint ${{ env.GOLANG_CI_VERSION }}"
+        with:
+          version: v${{ env.GOLANG_CI_VERSION }}
+          args: --timeout=5m
