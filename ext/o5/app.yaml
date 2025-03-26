@@ -24,7 +24,9 @@ databases:
 
 runtimes:
   - name: main
-    routes: []
+    routes: 
+      - prefix: "/ges/v1"
+        protocol: ROUTE_PROTOCOL_HTTP
 
     subscriptions:
       - name: "global/event"
