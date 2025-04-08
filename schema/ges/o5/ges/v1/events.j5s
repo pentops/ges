@@ -1,5 +1,7 @@
 package o5.ges.v1
 
+import j5.state.v1:psm
+
 service Query {
 
 	basePath = "/ges/v1"
@@ -36,24 +38,45 @@ service Query {
 
 }
 
+topic Replay publish {
+	message Events {
+		field queueURL ! string
+		field grpcService ! string
+		field grpcMethod ! string
+	}
+
+	message Upserts {
+		field queueURL ! string
+		field grpcService ! string
+		field grpcMethod ! string
+	}
+
+}
+
 object Event {
-	field id ! string
-	field entity_name ! string
+	field entityName ! string
+	field metadata ! object:psm.EventPublishMetadata
 
-	field sequence ! integer:UINT64
-	field timestamp ! timestamp
-	field event_type ! string
+	field grpcMethod ! string
+	field grpcService ! string
+	field bodyType ! string
 
-	field entity_keys ! any
-	field event_data ! any
-	field entity_state ! any
+	field eventType ! string
+
+	field entityKeys ! any
+	field eventData ! any
+	field entityState ! any
+	field entityStatus ! string
 }
 
 object Upsert {
-	field entity_name ! string
-	field entity_id ! string
+	field entityName ! string
+	field entityId ! string
+	
+	field grpcMethod ! string
+	field grpcService ! string
 
-	field last_event_id ! string
-	field last_event_timestamp ! timestamp
+	field lastEventId ! string
+	field lastEventTimestamp ! timestamp
 	field data ! any
 }

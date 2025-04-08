@@ -9,6 +9,7 @@ import (
 	"github.com/pentops/flowtest/prototest"
 	"github.com/pentops/ges/internal/gen/gestest/v1/gestest_tpb"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
+	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_tpb"
 	"github.com/pentops/j5/gen/j5/messaging/v1/messaging_j5pb"
 	"github.com/pentops/j5/lib/id62"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -86,6 +87,31 @@ func TestUpsertCycle(t *testing.T) {
 
 		prototest.AssertEqualProto(t, event2, fullMsg)
 
+	})
+
+	flow.Step("Replay", func(ctx context.Context, t flowtest.Asserter) {
+		t.MustMessage(uu.ReplayTopic.Upserts(ctx, &ges_tpb.UpsertsMessage{
+			QueueUrl:    "test-queue",
+			GrpcService: "gestest.v1.topic.FooSummaryTopic",
+			GrpcMethod:  "FooSummary",
+		}))
+
+		out := uu.CaptureReplayUpserts(ctx, t)
+
+		if len(out) != 1 {
+			t.Fatalf("expected 1 event, got %d", len(out))
+		}
+
+		evt := out[0]
+
+		t.Log(evt)
+	})
+
+	flow.Step("Empty Replay", func(ctx context.Context, t flowtest.Asserter) {
+		out := uu.CaptureReplayEvents(ctx, t)
+		if len(out) != 0 {
+			t.Fatalf("expected event to be consumed, %d in queue", len(out))
+		}
 	})
 
 }

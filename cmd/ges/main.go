@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/pentops/ges/internal/service"
 	"github.com/pentops/grpc.go/grpcbind"
 	"github.com/pentops/runner/commander"
 	"github.com/pentops/sqrlx.go/pgenv"
 	"github.com/pressly/goose"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -51,11 +55,33 @@ func runServe(ctx context.Context, cfg struct {
 		return err
 	}
 
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		service.GRPCMiddleware()...,
-	))
-	app.RegisterGRPC(grpcServer)
-	reflection.Register(grpcServer)
+	awsConfig, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
 
-	return cfg.ListenAndServe(ctx, grpcServer)
+	sqsClient := sqs.NewFromConfig(awsConfig)
+
+	listener, err := service.ReplayListener(cfg.DatabaseConfig.URL, sqsClient)
+	if err != nil {
+		return err
+	}
+
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+
+		grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+			service.GRPCMiddleware()...,
+		))
+		app.RegisterGRPC(grpcServer)
+		reflection.Register(grpcServer)
+
+		return cfg.ListenAndServe(ctx, grpcServer)
+	})
+
+	eg.Go(func() error {
+		return listener.Listen(ctx)
+	})
+
+	return eg.Wait()
 }

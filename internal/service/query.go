@@ -29,8 +29,8 @@ func NewQueryService(db sqrlx.Transactor) (*QueryService, error) {
 				TableName:  "event",
 				DataColumn: "data",
 				FallbackSortColumns: []pquery.ProtoField{
-					pquery.NewProtoField("timestamp", gl.Ptr("timestamp")),
-					pquery.NewProtoField("id", gl.Ptr("id")),
+					pquery.NewProtoField("metadata.timestamp", gl.Ptr("timestamp")),
+					pquery.NewProtoField("metadata.event_id", gl.Ptr("id")),
 				},
 				//Auth:
 				//AuthJoin:
