@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/pentops/flowtest"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
 	"github.com/pentops/ges/internal/service"
@@ -19,7 +18,6 @@ import (
 	"github.com/pentops/pgtest.go/pgtest"
 	"github.com/pentops/sqrlx.go/sqrlx"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Universe struct {
@@ -30,17 +28,13 @@ type Universe struct {
 	DB       sqrlx.Transactor
 	GRPCPair *flowtest.GRPCPair
 	Outbox   *outboxtest.OutboxAsserter
-
-	Codec *j5codec.Codec
 }
 
 func NewUniverse(ctx context.Context, t *testing.T) (*flowtest.Stepper[*testing.T], *Universe) {
 
 	name := t.Name()
 	stepper := flowtest.NewStepper[*testing.T](name)
-	uu := &Universe{
-		Codec: j5codec.NewCodec(),
-	}
+	uu := &Universe{}
 	stepper.Setup(func(ctx context.Context, t flowtest.Asserter) error {
 		log.DefaultLogger = log.NewCallbackLogger(stepper.LevelLog)
 		//log.DefaultLogger.SetLevel(slog.LevelDebug)
@@ -88,27 +82,16 @@ func (uu *Universe) Run(ctx context.Context, t flowtest.TB) {
 
 func (uu *Universe) HandleGeneric(ctx context.Context, t flowtest.TB, msg o5msg.Message) {
 
-	bodyData, err := uu.Codec.EncodeAny(msg.ProtoReflect())
+	bodyData, err := j5codec.Global.EncodeAny(msg.ProtoReflect())
 	if err != nil {
 		t.Fatalf("failed to encode message: %v", err)
 	}
 
-	header := msg.O5MessageHeader()
-
-	wrapper := &messaging_pb.Message{
-		MessageId:   uuid.New().String(),
-		Timestamp:   timestamppb.Now(),
-		GrpcService: header.GrpcService,
-		GrpcMethod:  header.GrpcMethod,
-		Body: &messaging_pb.Any{
-			TypeUrl:  fmt.Sprintf("type.googleapis.com/%s", msg.ProtoReflect().Descriptor().FullName()),
-			Value:    bodyData.J5Json,
-			Encoding: messaging_pb.WireEncoding_J5_JSON,
-		},
-		DelaySeconds:     0,
-		DestinationTopic: header.DestinationTopic,
-		Headers:          header.Headers,
-		Extension:        header.Extension,
+	wrapper := o5msg.MessageWrapper(msg)
+	wrapper.Body = &messaging_pb.Any{
+		TypeUrl:  fmt.Sprintf("type.googleapis.com/%s", msg.ProtoReflect().Descriptor().FullName()),
+		Value:    bodyData.J5Json,
+		Encoding: messaging_pb.WireEncoding_J5_JSON,
 	}
 
 	_, err = uu.GenericTopic.Generic(ctx, &messaging_tpb.GenericMessage{
@@ -124,7 +107,7 @@ func (uu *Universe) DecodeAnyTo(t flowtest.TB, input *any_j5t.Any, output proto.
 	if input == nil {
 		t.Fatalf("input any is nil")
 	}
-	err := uu.Codec.DecodeAnyTo(input, output)
+	err := j5codec.Global.DecodeAnyTo(input, output)
 	if err != nil {
 		t.Fatalf("failed to decode any: %v", err)
 	}

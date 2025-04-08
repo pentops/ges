@@ -21,6 +21,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	googleTypePrefix = "type.googleapis.com/"
+)
+
 type EventWorker struct {
 	db sqrlx.Transactor
 
@@ -65,44 +69,10 @@ func (ww *EventWorker) storeGeneric(ctx context.Context, req *messaging_tpb.Gene
 }
 
 func (ww *EventWorker) storeEvent(ctx context.Context, msg *messaging_pb.Message) error {
-	ext := msg.GetEvent()
 
-	shell := &EventShell{}
-
-	err := json.Unmarshal(msg.Body.Value, &shell)
+	event, err := parseEvent(msg)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal body: %w", err)
-	}
-
-	event := &ges_pb.Event{
-		Id:         shell.Metadata.EventID,
-		Sequence:   shell.Metadata.Sequence,
-		Timestamp:  timestamppb.New(shell.Metadata.Timestamp),
-		EntityName: ext.EntityName,
-		EntityState: &any_j5t.Any{
-			TypeName: fmt.Sprintf("%sState", ext.EntityName),
-			J5Json:   shell.Data,
-		},
-		EntityKeys: &any_j5t.Any{
-			TypeName: fmt.Sprintf("%sKeys", ext.EntityName),
-			J5Json:   shell.Keys,
-		},
-	}
-
-	for k, v := range shell.Event {
-		if k == "!type" {
-			// !type should equal the other key, but not required.
-			continue
-		}
-		if event.EventType != "" {
-			return fmt.Errorf("unexpected key in event oneof wrapper %s", k)
-		}
-		event.EventType = k
-		event.EventData = &any_j5t.Any{
-			TypeName: fmt.Sprintf("%sEventType", ext.EntityName),
-			J5Json:   v,
-		}
-		break
+		return fmt.Errorf("failed to parse event: %w", err)
 	}
 
 	eventData, err := protojson.Marshal(event)
@@ -111,11 +81,9 @@ func (ww *EventWorker) storeEvent(ctx context.Context, msg *messaging_pb.Message
 	}
 
 	log.WithFields(ctx, map[string]interface{}{
-		"eventId":        event.Id,
-		"eventTimestamp": event.Timestamp.AsTime(),
+		"eventId":        event.Metadata.EventId,
+		"eventTimestamp": event.Metadata.Timestamp.AsTime(),
 		"entityName":     event.EntityName,
-		"eventType":      event.EventType,
-		"entityKeys":     event.EntityKeys,
 	}).Info("Event")
 
 	return ww.db.Transact(ctx, &sqrlx.TxOptions{
@@ -131,8 +99,8 @@ func (ww *EventWorker) storeEvent(ctx context.Context, msg *messaging_pb.Message
 				"data",
 			).
 			Values(
-				event.Id,
-				event.Timestamp.AsTime(),
+				event.Metadata.EventId,
+				event.Metadata.Timestamp.AsTime(),
 				event.EntityName,
 				eventData,
 			),
@@ -143,20 +111,6 @@ func (ww *EventWorker) storeEvent(ctx context.Context, msg *messaging_pb.Message
 
 		return nil
 	})
-
-}
-
-type EventShell struct {
-	Metadata EventMetadata              `json:"metadata"`
-	Keys     json.RawMessage            `json:"keys"`
-	Event    map[string]json.RawMessage `json:"event"`
-	Data     json.RawMessage            `json:"data"`
-}
-
-type EventMetadata struct {
-	EventID   string    `json:"eventId"`
-	Timestamp time.Time `json:"timestamp"`
-	Sequence  uint64    `json:"sequence,string"`
 }
 
 func (ww *EventWorker) storeUpsert(ctx context.Context, msg *messaging_pb.Message) error {
@@ -175,7 +129,7 @@ func (ww *EventWorker) storeUpsert(ctx context.Context, msg *messaging_pb.Messag
 		LastEventId:        shell.Metadata.EventID,
 		LastEventTimestamp: timestamppb.New(shell.Metadata.Timestamp),
 		Data: &any_j5t.Any{
-			TypeName: strings.TrimPrefix(msg.Body.TypeUrl, "type.googleapis.com/"),
+			TypeName: strings.TrimPrefix(msg.Body.TypeUrl, googleTypePrefix),
 			J5Json:   msg.Body.Value,
 		},
 	}

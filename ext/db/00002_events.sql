@@ -4,7 +4,8 @@ CREATE TABLE event (
   timestamp timestamptz NOT NULL,
   entity_name text NOT NULL,
 
-  data jsonb NOT NULL
+  data jsonb NOT NULL -- ges.v1.Event
+
 );
 
 CREATE TABLE upsert (
@@ -12,7 +13,8 @@ CREATE TABLE upsert (
   entity_id text NOT NULL,
   last_event_id text NOT NULL,
   last_event_timestamp timestamptz NOT NULL,
-  data jsonb NOT NULL,
+  
+  data jsonb NOT NULL, -- ges.v1.Upsert
 
   PRIMARY KEY (entity_name, entity_id)
 );

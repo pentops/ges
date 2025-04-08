@@ -1,5 +1,7 @@
 package o5.ges.v1
 
+import j5.state.v1:psm
+
 service Query {
 
 	basePath = "/ges/v1"
@@ -37,21 +39,28 @@ service Query {
 }
 
 object Event {
-	field id ! string
 	field entity_name ! string
+	field metadata ! object:psm.EventPublishMetadata
 
-	field sequence ! integer:UINT64
-	field timestamp ! timestamp
+	field grpc_method ! string
+	field grpc_service ! string
+	field body_type ! string
+
 	field event_type ! string
 
 	field entity_keys ! any
 	field event_data ! any
 	field entity_state ! any
+	field entity_status ! string
+  
 }
 
 object Upsert {
 	field entity_name ! string
 	field entity_id ! string
+	
+	field grpc_method ! string
+	field grpc_service ! string
 
 	field last_event_id ! string
 	field last_event_timestamp ! timestamp
