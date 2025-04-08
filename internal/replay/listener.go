@@ -16,7 +16,7 @@ type Topic struct {
 	// Callback runs at the beginning of each connection, and on each
 	// notification. Return 'true' to re-run the callback (e.g. for draining the
 	// a queue)
-	Callback func(context.Context, pgx.Tx) (more bool, err error)
+	Callback func(context.Context, Transaction) (more bool, err error)
 }
 
 // Listener listens for Postgres notifications on a loop, and handles dropped
@@ -138,7 +138,7 @@ func (ll *Listener) runCallback(ctx context.Context, topic Topic, conn *pgx.Conn
 	hasMore := true
 	var err error
 	for hasMore {
-		err = ll.transact(ctx, func(ctx context.Context, tx pgx.Tx) error {
+		err = transact(ctx, conn, func(ctx context.Context, tx Transaction) error {
 			hasMore, err = topic.Callback(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("error running callback: %w", err)
@@ -152,11 +152,7 @@ func (ll *Listener) runCallback(ctx context.Context, topic Topic, conn *pgx.Conn
 	return nil
 }
 
-func (ll *Listener) transact(ctx context.Context, callback func(context.Context, pgx.Tx) error) error {
-	conn, err := ll.connection(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting connection: %w", err)
-	}
+func transact(ctx context.Context, conn *pgx.Conn, callback func(context.Context, Transaction) error) error {
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel: pgx.ReadCommitted,
 	})
@@ -164,7 +160,8 @@ func (ll *Listener) transact(ctx context.Context, callback func(context.Context,
 		return fmt.Errorf("error beginning transaction: %w", err)
 	}
 
-	err = callback(ctx, tx)
+	wrapped := &pgxTx{wrapped: tx}
+	err = callback(ctx, wrapped)
 	if err != nil {
 		rollbackErr := tx.Rollback(ctx)
 		if rollbackErr != nil {

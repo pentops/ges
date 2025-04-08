@@ -38,31 +38,45 @@ service Query {
 
 }
 
+topic Replay publish {
+	message Events {
+		field queueURL ! string
+		field grpcService ! string
+		field grpcMethod ! string
+	}
+
+	message Upserts {
+		field queueURL ! string
+		field grpcService ! string
+		field grpcMethod ! string
+	}
+
+}
+
 object Event {
-	field entity_name ! string
+	field entityName ! string
 	field metadata ! object:psm.EventPublishMetadata
 
-	field grpc_method ! string
-	field grpc_service ! string
-	field body_type ! string
+	field grpcMethod ! string
+	field grpcService ! string
+	field bodyType ! string
 
-	field event_type ! string
+	field eventType ! string
 
-	field entity_keys ! any
-	field event_data ! any
-	field entity_state ! any
-	field entity_status ! string
-  
+	field entityKeys ! any
+	field eventData ! any
+	field entityState ! any
+	field entityStatus ! string
 }
 
 object Upsert {
-	field entity_name ! string
-	field entity_id ! string
+	field entityName ! string
+	field entityId ! string
 	
-	field grpc_method ! string
-	field grpc_service ! string
+	field grpcMethod ! string
+	field grpcService ! string
 
-	field last_event_id ! string
-	field last_event_timestamp ! timestamp
+	field lastEventId ! string
+	field lastEventTimestamp ! timestamp
 	field data ! any
 }

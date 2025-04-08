@@ -1,17 +1,24 @@
 package service
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	sq "github.com/elgris/sqrl"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_pb"
+	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_tpb"
 	"github.com/pentops/ges/internal/replay"
 	"github.com/pentops/j5/gen/j5/state/v1/psm_j5pb"
 	"github.com/pentops/j5/j5types/any_j5t"
 	"github.com/pentops/j5/lib/j5codec"
+	"github.com/pentops/log.go/log"
 	"github.com/pentops/o5-messaging/gen/o5/messaging/v1/messaging_pb"
+	"github.com/pentops/sqrlx.go/sqrlx"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -142,37 +149,96 @@ func (er *eventRow) Message() (*messaging_pb.Message, error) {
 	return reconstructEvent(er.message)
 }
 
-func wrapAny(val *any_j5t.Any) *JSONAny {
-	return &JSONAny{
-		TypeName: val.TypeName,
-		J5Json:   val.J5Json,
-	}
-}
-
-type JSONAny struct {
-	TypeName string `json:"typeName"`
-	J5Json   []byte `json:"j5json"`
-}
-
 func (er *eventRow) Destination() string {
 	return er.destination
 }
 
-type eventQueryer struct{}
+type EventReplay struct{}
 
-var _ replay.MessageQuery[*eventRow] = (*eventQueryer)(nil)
+var _ replay.MessageQuery[*eventRow] = (*EventReplay)(nil)
 
-func (eq *eventQueryer) SelectQuery() string {
+func (eq *EventReplay) SelectQuery() string {
 	return "SELECT " +
 		"replay_event.replay_id, " +
 		"replay_event.queue_url, " +
 		"event.data " +
 		"FROM replay_event " +
-		"LEFT JOIN event ON event.id = replay_event.event_id " +
+		"INNER JOIN event ON event.id = replay_event.event_id " +
 		"LIMIT 10 FOR UPDATE SKIP LOCKED"
 }
 
-func (eq *eventQueryer) ScanRow(row replay.Row) (*eventRow, error) {
+func storeEvent(ctx context.Context, db sqrlx.Transactor, msg *messaging_pb.Message) error {
+
+	event, err := parseEvent(msg)
+	if err != nil {
+		return fmt.Errorf("failed to parse event: %w", err)
+	}
+
+	eventData, err := protojson.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event: %w", err)
+	}
+
+	log.WithFields(ctx, map[string]interface{}{
+		"eventId":        event.Metadata.EventId,
+		"eventTimestamp": event.Metadata.Timestamp.AsTime(),
+		"entityName":     event.EntityName,
+	}).Info("Event")
+
+	return db.Transact(ctx, &sqrlx.TxOptions{
+		ReadOnly:  false,
+		Retryable: true,
+		Isolation: sql.LevelReadCommitted,
+	}, func(ctx context.Context, tx sqrlx.Transaction) error {
+		_, err := tx.Exec(ctx, sq.Insert("event").
+			Columns(
+				"id",
+				"timestamp",
+				"grpc_service",
+				"grpc_method",
+				"entity_name",
+				"data",
+			).
+			Values(
+				event.Metadata.EventId,
+				event.Metadata.Timestamp.AsTime(),
+				event.GrpcService,
+				event.GrpcMethod,
+				event.EntityName,
+				eventData,
+			),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert event: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func queueReplayEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.EventsMessage) error {
+	sel := sq.Select().
+		Column("CONCAT(?::text, '/', id)", req.QueueUrl).
+		Column("id").
+		Column("?", req.QueueUrl).
+		From("event").
+		Where("grpc_method = ?", req.GrpcMethod).
+		Where("grpc_service = ?", req.GrpcService)
+
+	ins := sq.Insert("replay_event").
+		Columns("replay_id", "event_id", "queue_url").
+		Select(sel)
+
+	return db.Transact(ctx, &sqrlx.TxOptions{
+		ReadOnly:  false,
+		Retryable: true,
+	}, func(ctx context.Context, tx sqrlx.Transaction) error {
+		_, err := tx.Exec(ctx, ins)
+		return err
+	})
+}
+
+func (eq *EventReplay) ScanRow(row replay.Row) (*eventRow, error) {
 	var outboxRow eventRow
 	var dataBytes []byte
 	err := row.Scan(&outboxRow.id, &outboxRow.destination, &dataBytes)
@@ -187,10 +253,12 @@ func (eq *eventQueryer) ScanRow(row replay.Row) (*eventRow, error) {
 	return &outboxRow, nil
 }
 
-func (eq *eventQueryer) DeleteQuery(rows []*eventRow) (string, []interface{}, error) {
+func (eq *EventReplay) DeleteQuery(rows []*eventRow) (string, []interface{}, error) {
 	ids := make([]string, len(rows))
 	for i, row := range rows {
 		ids[i] = row.id
 	}
-	return "DELETE FROM replay_event WHERE replay_id = ANY($1)", []interface{}{ids}, nil
+	return "DELETE FROM replay_event WHERE replay_id = ANY($1)", []interface{}{
+		pq.StringArray(ids),
+	}, nil
 }

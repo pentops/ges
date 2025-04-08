@@ -33,6 +33,7 @@ runtimes:
         envName: "*"
       - name: "global/upsert"
         envName: "*"
+      - name: "/ges.v1.topic.ReplayTopic"
 
     containers:
       - name: main

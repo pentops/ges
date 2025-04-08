@@ -8,7 +8,8 @@ CREATE TABLE replay_event (
 
 CREATE TABLE replay_upsert (
   replay_id text PRIMARY KEY, -- {queue_url}/{entity_name}/{entity_id}
-  entity_name text NOT NULL,
+  grpc_service text NOT NULL,
+  grpc_method text NOT NULL,
   entity_id text NOT NULL,
   queue_url text NOT NULL
 );

@@ -15,9 +15,7 @@ import "j5/state/v1/metadata.proto";
 service FooPublishTopic {
   option (j5.messaging.v1.service) = {
     topic_name: "foo_publish"
-    event: {
-      entity_name: "gestest.v1.Foo"
-    }
+    event: {entity_name: "gestest.v1.Foo"}
   };
 
   rpc FooEvent(FooEventMessage) returns (google.protobuf.Empty) {}
@@ -26,9 +24,7 @@ service FooPublishTopic {
 service FooSummaryTopic {
   option (j5.messaging.v1.service) = {
     topic_name: "foo_summary"
-    upsert: {
-      entity_name: "gestest.v1.Foo"
-    }
+    upsert: {entity_name: "gestest.v1.Foo"}
   };
 
   rpc FooSummary(FooSummaryMessage) returns (google.protobuf.Empty) {}
@@ -60,9 +56,7 @@ message FooEventMessage {
   gestest.v1.FooStatus status = 5 [
     (buf.validate.field) = {
       required: true
-      enum: {
-        defined_only: true
-      }
+      enum: {defined_only: true}
     },
     (j5.ext.v1.field).enum = {}
   ];

@@ -6,10 +6,18 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pentops/log.go/log"
+	"github.com/pentops/sqrlx.go/sqrlx"
 )
 
 type Row interface {
 	Scan(dest ...any) error
+}
+
+type Rows interface {
+	Row
+	Next() bool
+	Close() error
+	Err() error
 }
 
 type MessageQuery[T Message] interface {
@@ -23,7 +31,61 @@ type MessageQuery[T Message] interface {
 	ScanRow(row Row) (T, error)
 }
 
-func doPage[T Message](ctx context.Context, tx pgx.Tx, sqs SQS, qq MessageQuery[T]) (bool, error) {
+func WrapPublisher[T Message](sqs SQS, mq MessageQuery[T]) func(context.Context, Transaction) (bool, error) {
+	return func(ctx context.Context, tx Transaction) (bool, error) {
+		return DoPage(ctx, tx, sqs, mq)
+	}
+}
+
+type Transaction interface {
+	Query(ctx context.Context, query string, args ...any) (Rows, error)
+	Exec(ctx context.Context, query string, args ...any) error
+}
+
+type pgxTx struct {
+	wrapped pgx.Tx
+}
+
+func (tx *pgxTx) Query(ctx context.Context, query string, args ...any) (Rows, error) {
+	rows, err := tx.wrapped.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("error querying messages: %w", err)
+	}
+	return pgxRows{rows}, nil
+}
+
+type pgxRows struct {
+	pgx.Rows
+}
+
+func (r pgxRows) Close() error {
+	r.Rows.Close()
+	return nil
+}
+
+func (tx *pgxTx) Exec(ctx context.Context, query string, args ...any) error {
+	_, err := tx.wrapped.Exec(ctx, query, args...)
+	return err
+}
+
+type sqrlxTx struct {
+	wrapped sqrlx.Transaction
+}
+
+func WrapSqrlx(tx sqrlx.Transaction) Transaction {
+	return &sqrlxTx{wrapped: tx}
+}
+
+func (tx *sqrlxTx) Query(ctx context.Context, query string, args ...any) (Rows, error) {
+	return tx.wrapped.QueryRaw(ctx, query, args...)
+}
+
+func (tx *sqrlxTx) Exec(ctx context.Context, query string, args ...any) error {
+	_, err := tx.wrapped.ExecRaw(ctx, query, args...)
+	return err
+}
+
+func DoPage[T Message](ctx context.Context, tx Transaction, sqs SQS, qq MessageQuery[T]) (bool, error) {
 	var count int
 
 	selectQuery := qq.SelectQuery()
@@ -34,7 +96,8 @@ func doPage[T Message](ctx context.Context, tx pgx.Tx, sqs SQS, qq MessageQuery[
 	count = 0
 	rows, err := tx.Query(ctx, selectQuery)
 	if err != nil {
-		return false, fmt.Errorf("error selecting outbox messages: %w", err)
+		log.WithError(ctx, err).Error("error selecting messages")
+		return false, fmt.Errorf("error selecting messages: %w", err)
 	}
 
 	if err := func() error {
@@ -43,7 +106,7 @@ func doPage[T Message](ctx context.Context, tx pgx.Tx, sqs SQS, qq MessageQuery[
 			count++
 			msg, err := qq.ScanRow(rows)
 			if err != nil {
-				return fmt.Errorf("error scanning outbox row: %w", err)
+				return fmt.Errorf("error scanning row: %w", err)
 			}
 			if err := batches.addRow(msg); err != nil {
 				return err
@@ -66,14 +129,15 @@ func doPage[T Message](ctx context.Context, tx pgx.Tx, sqs SQS, qq MessageQuery[
 			break
 		}
 
-		log.WithField(ctx, "successCount", len(successMessages)).Debug("published outbox messages")
+		log.WithField(ctx, "successCount", len(successMessages)).Debug("published messages")
 		deleteQuery, args, err := qq.DeleteQuery(successMessages)
 		if err != nil {
 			return false, fmt.Errorf("error creating delete query: %w", err)
 		}
-		_, err = tx.Exec(ctx, deleteQuery, args...)
+		err = tx.Exec(ctx, deleteQuery, args...)
 		if err != nil {
-			return false, fmt.Errorf("error deleting outbox messages: %w", err)
+			log.WithError(ctx, err).Error("error deleting sent messages")
+			return false, fmt.Errorf("error deleting messages: %w", err)
 		}
 	}
 

@@ -13,13 +13,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const (
-	ReplayEventPGChannel  = "replay_event_notification"
-	ReplayUpsertPGChannel = "replay_upsert_notification"
-)
-
 type SQS interface {
-	PublishBatch(context.Context, sqs.SendMessageBatchInput) (sqs.SendMessageBatchOutput, error)
+	SendMessageBatch(context.Context, *sqs.SendMessageBatchInput, ...func(*sqs.Options)) (*sqs.SendMessageBatchOutput, error)
 }
 
 type Message interface {
@@ -62,7 +57,7 @@ func (mb messageBatches[T]) addRow(row T) error {
 func publishBatch[T Message](ctx context.Context, sqsClient SQS, batch messageBatch[T]) ([]T, error) {
 	log.WithField(ctx, "queueUrl", batch.queueUrl).Debug("publishing batch")
 
-	input := sqs.SendMessageBatchInput{
+	input := &sqs.SendMessageBatchInput{
 		Entries:  make([]types.SendMessageBatchRequestEntry, len(batch.messageBodies)),
 		QueueUrl: &batch.queueUrl,
 	}
@@ -74,7 +69,7 @@ func publishBatch[T Message](ctx context.Context, sqsClient SQS, batch messageBa
 		}
 	}
 
-	output, err := sqsClient.PublishBatch(ctx, input)
+	output, err := sqsClient.SendMessageBatch(ctx, input)
 	if err != nil {
 
 		// From the docs: The result of sending each message is reported individually in the response. Because the batch request can result in a combination of successful and unsuccessful actions, you should check for batch errors even when the call returns an HTTP status code of 200 .
