@@ -59,7 +59,7 @@ func (ll *Listener) connection(ctx context.Context) (*pgx.Conn, error) {
 	}
 
 	for _, topic := range ll.topics {
-		if _, err := conn.Exec(ctx, "LISTEN ?", topic.Name); err != nil {
+		if _, err := conn.Exec(ctx, "LISTEN $1", topic.Name); err != nil {
 			return nil, fmt.Errorf("error listening to topic %s: %w", topic.Name, err)
 		}
 	}
