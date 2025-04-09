@@ -3,6 +3,7 @@ package replay
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -59,13 +60,18 @@ func (ll *Listener) connection(ctx context.Context) (*pgx.Conn, error) {
 	}
 
 	for _, topic := range ll.topics {
-		if _, err := conn.Exec(ctx, "LISTEN $1", topic.Name); err != nil {
+		if !rePostgresCleanTopic.MatchString(topic.Name) {
+			return nil, fmt.Errorf("invalid topic name: %s", topic.Name)
+		}
+		if _, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", topic.Name)); err != nil {
 			return nil, fmt.Errorf("error listening to topic %s: %w", topic.Name, err)
 		}
 	}
 
 	return conn, nil
 }
+
+var rePostgresCleanTopic = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 func (ll *Listener) closeConnection(ctx context.Context) {
 	if err := ll.conn.Close(ctx); err != nil {
