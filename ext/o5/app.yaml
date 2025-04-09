@@ -28,6 +28,9 @@ runtimes:
       - prefix: "/ges/v1"
         protocol: ROUTE_PROTOCOL_HTTP
 
+    namedEnvPolicies:
+      - "sqs-direct"
+
     subscriptions:
       - name: "global/event"
       - name: "global/upsert"
