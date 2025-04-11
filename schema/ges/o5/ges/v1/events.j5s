@@ -35,6 +35,37 @@ service Query {
 			field events array:object:Upsert
 		}
 	}
+}
+
+service Command {
+	basePath = "/ges/v1"
+    method ReplayEvents {
+        httpMethod = "POST"
+        httpPath = "/events/replay"
+
+        request {
+            field queueURL ! string
+            field grpcService ! string
+            field grpcMethod ! string
+        }
+
+        response {
+        }
+    }
+
+    method ReplayUpserts { 
+        httpMethod = "POST"
+        httpPath = "/upserts/replay"
+
+        request {
+            field queueURL ! string
+            field grpcService ! string
+            field grpcMethod ! string
+        }
+
+        response {
+        }
+    }
 
 }
 
@@ -80,3 +111,4 @@ object Upsert {
 	field lastEventTimestamp ! timestamp
 	field data ! any
 }
+

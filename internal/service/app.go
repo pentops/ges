@@ -11,9 +11,10 @@ import (
 )
 
 type App struct {
-	QueryService *QueryService
-	EventWorker  *EventWorker
-	ReplayWorker *ReplayWorker
+	QueryService   *QueryService
+	CommandService *CommandService
+	EventWorker    *EventWorker
+	ReplayWorker   *ReplayWorker
 }
 
 func NewApp(db sqrlx.Transactor) (*App, error) {
@@ -22,18 +23,25 @@ func NewApp(db sqrlx.Transactor) (*App, error) {
 		return nil, fmt.Errorf("failed to create query service: %w", err)
 	}
 
+	cs, err := NewCommandService(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create command service: %w", err)
+	}
+
 	replayWorker := NewReplayWorker(db)
 
 	app := &App{
-		QueryService: qs,
-		EventWorker:  NewEventWorker(db),
-		ReplayWorker: replayWorker,
+		QueryService:   qs,
+		CommandService: cs,
+		EventWorker:    NewEventWorker(db),
+		ReplayWorker:   replayWorker,
 	}
 	return app, nil
 }
 
 func (a *App) RegisterGRPC(server grpc.ServiceRegistrar) {
 	a.QueryService.RegisterGRPC(server)
+	a.CommandService.RegisterGRPC(server)
 	a.EventWorker.RegisterGRPC(server)
 	a.ReplayWorker.RegisterGRPC(server)
 }
