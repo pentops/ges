@@ -30,8 +30,8 @@ func main() {
 func runMigrate(ctx context.Context, cfg struct {
 	MigrationsDir string `env:"MIGRATIONS_DIR" default:"./ext/db"`
 	pgenv.DatabaseConfig
-}) error {
-
+},
+) error {
 	db, err := cfg.OpenPostgres(ctx)
 	if err != nil {
 		return err
@@ -43,8 +43,8 @@ func runMigrate(ctx context.Context, cfg struct {
 func runServe(ctx context.Context, cfg struct {
 	grpcbind.EnvConfig
 	pgenv.DatabaseConfig
-}) error {
-
+},
+) error {
 	db, err := cfg.OpenPostgresTransactor(ctx)
 	if err != nil {
 		return err
@@ -62,14 +62,13 @@ func runServe(ctx context.Context, cfg struct {
 
 	sqsClient := sqs.NewFromConfig(awsConfig)
 
-	listener, err := service.ReplayListener(cfg.DatabaseConfig.URL, sqsClient)
+	listener, err := service.ReplayListener(cfg.URL, sqsClient)
 	if err != nil {
 		return err
 	}
 
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
-
 		grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 			service.GRPCMiddleware()...,
 		))
