@@ -4,6 +4,7 @@ syntax = "proto3";
 
 package o5.ges.v1.service;
 
+import "buf/validate/validate.proto";
 import "google/api/annotations.proto";
 import "j5/ext/v1/annotations.proto";
 import "j5/list/v1/page.proto";
@@ -17,6 +18,22 @@ service QueryService {
 
   rpc UpsertList(UpsertListRequest) returns (UpsertListResponse) {
     option (google.api.http) = {get: "/ges/v1/upsert"};
+  }
+}
+
+service CommandService {
+  rpc ReplayEvents(ReplayEventsRequest) returns (ReplayEventsResponse) {
+    option (google.api.http) = {
+      post: "/ges/v1/events/replay"
+      body: "*"
+    };
+  }
+
+  rpc ReplayUpserts(ReplayUpsertsRequest) returns (ReplayUpsertsResponse) {
+    option (google.api.http) = {
+      post: "/ges/v1/upserts/replay"
+      body: "*"
+    };
   }
 }
 
@@ -50,4 +67,50 @@ message UpsertListResponse {
   j5.list.v1.PageResponse page = 1 [(j5.ext.v1.field).object = {}];
 
   repeated o5.ges.v1.Upsert events = 2 [(j5.ext.v1.field).array = {}];
+}
+
+message ReplayEventsRequest {
+  option (j5.ext.v1.message).object = {};
+
+  string queue_url = 1 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+
+  string grpc_service = 2 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+
+  string grpc_method = 3 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+}
+
+message ReplayEventsResponse {
+  option (j5.ext.v1.message).object = {};
+}
+
+message ReplayUpsertsRequest {
+  option (j5.ext.v1.message).object = {};
+
+  string queue_url = 1 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+
+  string grpc_service = 2 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+
+  string grpc_method = 3 [
+    (buf.validate.field).required = true,
+    (j5.ext.v1.field).string = {}
+  ];
+}
+
+message ReplayUpsertsResponse {
+  option (j5.ext.v1.message).object = {};
 }

@@ -146,3 +146,130 @@ var QueryService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "o5/ges/v1/service/events.p.j5s.proto",
 }
+
+const (
+	CommandService_ReplayEvents_FullMethodName  = "/o5.ges.v1.service.CommandService/ReplayEvents"
+	CommandService_ReplayUpserts_FullMethodName = "/o5.ges.v1.service.CommandService/ReplayUpserts"
+)
+
+// CommandServiceClient is the client API for CommandService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CommandServiceClient interface {
+	ReplayEvents(ctx context.Context, in *ReplayEventsRequest, opts ...grpc.CallOption) (*ReplayEventsResponse, error)
+	ReplayUpserts(ctx context.Context, in *ReplayUpsertsRequest, opts ...grpc.CallOption) (*ReplayUpsertsResponse, error)
+}
+
+type commandServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCommandServiceClient(cc grpc.ClientConnInterface) CommandServiceClient {
+	return &commandServiceClient{cc}
+}
+
+func (c *commandServiceClient) ReplayEvents(ctx context.Context, in *ReplayEventsRequest, opts ...grpc.CallOption) (*ReplayEventsResponse, error) {
+	out := new(ReplayEventsResponse)
+	err := c.cc.Invoke(ctx, CommandService_ReplayEvents_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *commandServiceClient) ReplayUpserts(ctx context.Context, in *ReplayUpsertsRequest, opts ...grpc.CallOption) (*ReplayUpsertsResponse, error) {
+	out := new(ReplayUpsertsResponse)
+	err := c.cc.Invoke(ctx, CommandService_ReplayUpserts_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CommandServiceServer is the server API for CommandService service.
+// All implementations must embed UnimplementedCommandServiceServer
+// for forward compatibility
+type CommandServiceServer interface {
+	ReplayEvents(context.Context, *ReplayEventsRequest) (*ReplayEventsResponse, error)
+	ReplayUpserts(context.Context, *ReplayUpsertsRequest) (*ReplayUpsertsResponse, error)
+	mustEmbedUnimplementedCommandServiceServer()
+}
+
+// UnimplementedCommandServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedCommandServiceServer struct {
+}
+
+func (UnimplementedCommandServiceServer) ReplayEvents(context.Context, *ReplayEventsRequest) (*ReplayEventsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReplayEvents not implemented")
+}
+func (UnimplementedCommandServiceServer) ReplayUpserts(context.Context, *ReplayUpsertsRequest) (*ReplayUpsertsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReplayUpserts not implemented")
+}
+func (UnimplementedCommandServiceServer) mustEmbedUnimplementedCommandServiceServer() {}
+
+// UnsafeCommandServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CommandServiceServer will
+// result in compilation errors.
+type UnsafeCommandServiceServer interface {
+	mustEmbedUnimplementedCommandServiceServer()
+}
+
+func RegisterCommandServiceServer(s grpc.ServiceRegistrar, srv CommandServiceServer) {
+	s.RegisterService(&CommandService_ServiceDesc, srv)
+}
+
+func _CommandService_ReplayEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReplayEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommandServiceServer).ReplayEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommandService_ReplayEvents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommandServiceServer).ReplayEvents(ctx, req.(*ReplayEventsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommandService_ReplayUpserts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReplayUpsertsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommandServiceServer).ReplayUpserts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommandService_ReplayUpserts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommandServiceServer).ReplayUpserts(ctx, req.(*ReplayUpsertsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// CommandService_ServiceDesc is the grpc.ServiceDesc for CommandService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var CommandService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "o5.ges.v1.service.CommandService",
+	HandlerType: (*CommandServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ReplayEvents",
+			Handler:    _CommandService_ReplayEvents_Handler,
+		},
+		{
+			MethodName: "ReplayUpserts",
+			Handler:    _CommandService_ReplayUpserts_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "o5/ges/v1/service/events.p.j5s.proto",
+}

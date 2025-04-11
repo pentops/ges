@@ -19,10 +19,7 @@ type QueryService struct {
 	ges_spb.UnsafeQueryServiceServer
 }
 
-var _ ges_spb.QueryServiceServer = &QueryService{}
-
 func NewQueryService(db sqrlx.Transactor) (*QueryService, error) {
-
 	eventLister, err := pquery.NewLister(
 		pquery.ListSpec[*ges_spb.EventsListRequest, *ges_spb.EventsListResponse]{
 			TableSpec: pquery.TableSpec{
@@ -32,12 +29,11 @@ func NewQueryService(db sqrlx.Transactor) (*QueryService, error) {
 					pquery.NewProtoField("metadata.timestamp", gl.Ptr("timestamp")),
 					pquery.NewProtoField("metadata.event_id", gl.Ptr("id")),
 				},
-				//Auth:
-				//AuthJoin:
+				// Auth:
+				// AuthJoin:
 			},
-			//RequestFilter: smSpec.ListRequestFilter,
+			// RequestFilter: smSpec.ListRequestFilter,
 		})
-
 	if err != nil {
 		return nil, fmt.Errorf("create event lister: %w", err)
 	}
@@ -51,12 +47,11 @@ func NewQueryService(db sqrlx.Transactor) (*QueryService, error) {
 					pquery.NewProtoField("entity_id", gl.Ptr("entity_id")),
 					pquery.NewProtoField("last_event_timestamp", gl.Ptr("last_event_timestamp")),
 				},
-				//Auth:
-				//AuthJoin:
+				// Auth:
+				// AuthJoin:
 			},
-			//RequestFilter: smSpec.ListRequestFilter,
+			// RequestFilter: smSpec.ListRequestFilter,
 		})
-
 	if err != nil {
 		return nil, fmt.Errorf("create upsert lister: %w", err)
 	}
