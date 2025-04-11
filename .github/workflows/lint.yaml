@@ -9,9 +9,6 @@ on:
 permissions:
   contents: read
 
-env:
-  GOLANG_CI_VERSION: '1.64'
-
 jobs:
   lint:
     name: Linting
@@ -21,9 +18,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - uses: golangci/golangci-lint-action@v6
-        name: "GolangCI-Lint ${{ env.GOLANG_CI_VERSION }}"
+      - uses: actions/setup-go@v5
         with:
-          version: v${{ env.GOLANG_CI_VERSION }}
+          go-version: stable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.0
           args: --timeout=5m
