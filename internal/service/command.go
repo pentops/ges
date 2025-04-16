@@ -47,7 +47,7 @@ func (s *CommandService) ReplayUpserts(ctx context.Context, req *ges_spb.ReplayU
 	msg := &ges_tpb.UpsertsMessage{
 		QueueUrl:    req.QueueUrl,
 		GrpcService: req.GrpcService,
-		GrpcMethod:  req.GrpcService,
+		GrpcMethod:  req.GrpcMethod,
 	}
 	if err := s.db.Transact(ctx, &sqrlx.TxOptions{
 		ReadOnly:  false,
