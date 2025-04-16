@@ -30,7 +30,7 @@ func (s *CommandService) ReplayEvents(ctx context.Context, req *ges_spb.ReplayEv
 	msg := &ges_tpb.EventsMessage{
 		QueueUrl:    req.QueueUrl,
 		GrpcService: req.GrpcService,
-		GrpcMethod:  req.GrpcService,
+		GrpcMethod:  req.GrpcMethod,
 	}
 	if err := s.db.Transact(ctx, &sqrlx.TxOptions{
 		ReadOnly:  false,
