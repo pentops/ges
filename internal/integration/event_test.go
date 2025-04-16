@@ -69,7 +69,7 @@ func TestEventCycle(t *testing.T) {
 
 	flow.Step("Replay", func(ctx context.Context, t flowtest.Asserter) {
 		t.MustMessage(uu.ReplayTopic.Events(ctx, &ges_tpb.EventsMessage{
-			QueueUrl: "test-queue",
+			QueueUrl: "https://sqs/test-queue",
 
 			GrpcService: "gestest.v1.topic.FooPublishTopic",
 			GrpcMethod:  "FooEvent",

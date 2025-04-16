@@ -158,12 +158,26 @@ func queueUpsertEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.Up
 		).
 		Select(sel)
 
+	log.WithFields(ctx, map[string]interface{}{
+		"queueUrl":    req.QueueUrl,
+		"grpcService": req.GrpcService,
+		"grpcMethod":  req.GrpcMethod,
+	}).Info("Queueing replay upserts")
+
 	return db.Transact(ctx, &sqrlx.TxOptions{
 		ReadOnly:  false,
 		Retryable: true,
 	}, func(ctx context.Context, tx sqrlx.Transaction) error {
 		_, err := tx.Exec(ctx, ins)
-		return err
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayUpsertPGChannel, nil)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 

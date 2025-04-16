@@ -229,12 +229,25 @@ func queueReplayEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.Ev
 		Columns("replay_id", "event_id", "queue_url").
 		Select(sel)
 
+	log.WithFields(ctx, map[string]interface{}{
+		"queueUrl":    req.QueueUrl,
+		"grpcService": req.GrpcService,
+		"grpcMethod":  req.GrpcMethod,
+	}).Info("Queueing replay events")
+
 	return db.Transact(ctx, &sqrlx.TxOptions{
 		ReadOnly:  false,
 		Retryable: true,
 	}, func(ctx context.Context, tx sqrlx.Transaction) error {
 		_, err := tx.Exec(ctx, ins)
-		return err
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayEventPGChannel, nil)
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 }
 

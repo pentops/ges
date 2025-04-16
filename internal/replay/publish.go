@@ -71,9 +71,11 @@ func publishBatch[T Message](ctx context.Context, sqsClient SQS, batch messageBa
 
 	output, err := sqsClient.SendMessageBatch(ctx, input)
 	if err != nil {
-
-		// From the docs: The result of sending each message is reported individually in the response. Because the batch request can result in a combination of successful and unsuccessful actions, you should check for batch errors even when the call returns an HTTP status code of 200 .
-
+		// From the docs: The result of sending each message is reported
+		// individually in the response. Because the batch request can result in
+		// a combination of successful and unsuccessful actions, you should
+		// check for batch errors even when the call returns an HTTP status code
+		// of 200 .
 		return nil, fmt.Errorf("error publishing batch: %w", err)
 	}
 
