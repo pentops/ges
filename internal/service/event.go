@@ -243,7 +243,7 @@ func queueReplayEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.Ev
 		if err != nil {
 			return err
 		}
-		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayEventPGChannel, nil)
+		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayEventPGChannel)
 		if err != nil {
 			return err
 		}

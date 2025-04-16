@@ -172,7 +172,7 @@ func queueUpsertEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.Up
 		if err != nil {
 			return err
 		}
-		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayUpsertPGChannel, nil)
+		_, err = tx.ExecRaw(ctx, "NOTIFY "+ReplayUpsertPGChannel)
 		if err != nil {
 			return err
 		}
