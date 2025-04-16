@@ -2,55 +2,55 @@
 name: "ges"
 
 deploymentConfig:
-  quickMode: true
+	quickMode: true
 
 databases:
-  - name: main
-    postgres:
-      runOutbox: true
-      serverGroup: default
-      dbExtensions:
-        - "uuid-ossp"
+	- name: main
+		postgres:
+			runOutbox: true
+			serverGroup: default
+			dbExtensions:
+				- "uuid-ossp"
 
-      migrateContainer:
-        image:
-          name: ges
-          registry: ghcr.io/pentops
-        command: [migrate]
-        envVars:
-          - name: "POSTGRES_URL"
-            database:
-              databaseName: main
+			migrateContainer:
+				image:
+					name: ges
+					registry: ghcr.io/pentops
+				command: [migrate]
+				envVars:
+					- name: "POSTGRES_URL"
+						database:
+							databaseName: main
 
 runtimes:
-  - name: main
-    routes: 
-      - prefix: "/ges/v1"
-        protocol: ROUTE_PROTOCOL_HTTP
+	- name: main
+		routes: 
+			- prefix: "/ges/v1"
+				protocol: ROUTE_PROTOCOL_HTTP
 
-    namedEnvPolicies:
-      - "sqs-direct"
+		namedEnvPolicies:
+			- "sqs-direct"
 
-    subscriptions:
-      - name: "global/event"
-      - name: "global/upsert"
-      - name: "/ges.v1.topic.ReplayTopic"
+		subscriptions:
+			- name: "global/event"
+			- name: "global/upsert"
+			- name: "/o5.ges.v1.topic.ReplayTopic"
 
-    containers:
-      - name: main
-        demand: DEMAND_LIGHT
-        image:
-            name: ges
-            registry: ghcr.io/pentops
-        command: [serve]
-        envVars:
-          - name: LOG_LEVEL
-            value: "debug"
+		containers:
+			- name: main
+				demand: DEMAND_LIGHT
+				image:
+						name: ges
+						registry: ghcr.io/pentops
+				command: [serve]
+				envVars:
+					- name: LOG_LEVEL
+						value: "debug"
 
-          - name: POSTGRES_URL
-            database:
-              databaseName: main
+					- name: POSTGRES_URL
+						database:
+							databaseName: main
 
-          - name: GRPC_BIND
-            value: ":8080"
+					- name: GRPC_BIND
+						value: ":8080"
 
