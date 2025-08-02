@@ -59,3 +59,20 @@ func (s *CommandService) ReplayUpserts(ctx context.Context, req *ges_spb.ReplayU
 	}
 	return &ges_spb.ReplayUpsertsResponse{}, nil
 }
+
+func (s *CommandService) ReplayGeneric(ctx context.Context, req *ges_spb.ReplayGenericRequest) (*ges_spb.ReplayGenericResponse, error) {
+	msg := &ges_tpb.GenericMessage{
+		QueueUrl:    req.QueueUrl,
+		GrpcService: req.GrpcService,
+		GrpcMethod:  req.GrpcMethod,
+	}
+	if err := s.db.Transact(ctx, &sqrlx.TxOptions{
+		ReadOnly:  false,
+		Retryable: true,
+	}, func(ctx context.Context, tx sqrlx.Transaction) error {
+		return outbox.Send(ctx, tx, msg)
+	}); err != nil {
+		return nil, err
+	}
+	return &ges_spb.ReplayGenericResponse{}, nil
+}

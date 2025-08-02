@@ -25,8 +25,17 @@ CREATE TABLE upsert (
   PRIMARY KEY (grpc_service, grpc_method, entity_id)
 );
 
+CREATE TABLE generic (
+  grpc_service text NOT NULL,
+  grpc_method text NOT NULL,
+  message_id text PRIMARY KEY,
+  timestamp timestamptz NOT NULL,
+  data jsonb NOT NULL -- original message
+);
+
 
 -- +goose Down
 
+DROP TABLE generic;
 DROP TABLE event;
 DROP TABLE upsert;

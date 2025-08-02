@@ -35,6 +35,18 @@ func (msg *UpsertsMessage) O5MessageHeader() o5msg.Header {
 	return header
 }
 
+// Method: Generic
+
+func (msg *GenericMessage) O5MessageHeader() o5msg.Header {
+	header := o5msg.Header{
+		GrpcService:      "o5.ges.v1.topic.ReplayTopic",
+		GrpcMethod:       "Generic",
+		Headers:          map[string]string{},
+		DestinationTopic: "replay",
+	}
+	return header
+}
+
 type ReplayTopicTxSender[C any] struct {
 	sender o5msg.TxSender[C]
 }
@@ -50,6 +62,10 @@ func NewReplayTopicTxSender[C any](sender o5msg.TxSender[C]) *ReplayTopicTxSende
 			{
 				Name:    "Upserts",
 				Message: (*UpsertsMessage).ProtoReflect(nil).Descriptor(),
+			},
+			{
+				Name:    "Generic",
+				Message: (*GenericMessage).ProtoReflect(nil).Descriptor(),
 			},
 		},
 	})
@@ -72,6 +88,10 @@ func NewReplayTopicCollector[C any](collector o5msg.Collector[C]) *ReplayTopicCo
 				Name:    "Upserts",
 				Message: (*UpsertsMessage).ProtoReflect(nil).Descriptor(),
 			},
+			{
+				Name:    "Generic",
+				Message: (*GenericMessage).ProtoReflect(nil).Descriptor(),
+			},
 		},
 	})
 	return &ReplayTopicCollector[C]{collector: collector}
@@ -92,6 +112,10 @@ func NewReplayTopicPublisher(publisher o5msg.Publisher) *ReplayTopicPublisher {
 			{
 				Name:    "Upserts",
 				Message: (*UpsertsMessage).ProtoReflect(nil).Descriptor(),
+			},
+			{
+				Name:    "Generic",
+				Message: (*GenericMessage).ProtoReflect(nil).Descriptor(),
 			},
 		},
 	})
@@ -123,5 +147,19 @@ func (collect ReplayTopicCollector[C]) Upserts(sendContext C, msg *UpsertsMessag
 }
 
 func (publish ReplayTopicPublisher) Upserts(ctx context.Context, msg *UpsertsMessage) error {
+	return publish.publisher.Publish(ctx, msg)
+}
+
+// Method: Generic
+
+func (send ReplayTopicTxSender[C]) Generic(ctx context.Context, sendContext C, msg *GenericMessage) error {
+	return send.sender.Send(ctx, sendContext, msg)
+}
+
+func (collect ReplayTopicCollector[C]) Generic(sendContext C, msg *GenericMessage) {
+	collect.collector.Collect(sendContext, msg)
+}
+
+func (publish ReplayTopicPublisher) Generic(ctx context.Context, msg *GenericMessage) error {
 	return publish.publisher.Publish(ctx, msg)
 }

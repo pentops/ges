@@ -176,3 +176,81 @@ func (collect FooSummaryTopicCollector[C]) FooSummary(sendContext C, msg *FooSum
 func (publish FooSummaryTopicPublisher) FooSummary(ctx context.Context, msg *FooSummaryMessage) error {
 	return publish.publisher.Publish(ctx, msg)
 }
+
+// Service: GenericTopic
+// Method: Foo
+
+func (msg *FooMessage) O5MessageHeader() o5msg.Header {
+	header := o5msg.Header{
+		GrpcService:      "gestest.v1.topic.GenericTopic",
+		GrpcMethod:       "Foo",
+		Headers:          map[string]string{},
+		DestinationTopic: "generic",
+	}
+	return header
+}
+
+type GenericTopicTxSender[C any] struct {
+	sender o5msg.TxSender[C]
+}
+
+func NewGenericTopicTxSender[C any](sender o5msg.TxSender[C]) *GenericTopicTxSender[C] {
+	sender.Register(o5msg.TopicDescriptor{
+		Service: "gestest.v1.topic.GenericTopic",
+		Methods: []o5msg.MethodDescriptor{
+			{
+				Name:    "Foo",
+				Message: (*FooMessage).ProtoReflect(nil).Descriptor(),
+			},
+		},
+	})
+	return &GenericTopicTxSender[C]{sender: sender}
+}
+
+type GenericTopicCollector[C any] struct {
+	collector o5msg.Collector[C]
+}
+
+func NewGenericTopicCollector[C any](collector o5msg.Collector[C]) *GenericTopicCollector[C] {
+	collector.Register(o5msg.TopicDescriptor{
+		Service: "gestest.v1.topic.GenericTopic",
+		Methods: []o5msg.MethodDescriptor{
+			{
+				Name:    "Foo",
+				Message: (*FooMessage).ProtoReflect(nil).Descriptor(),
+			},
+		},
+	})
+	return &GenericTopicCollector[C]{collector: collector}
+}
+
+type GenericTopicPublisher struct {
+	publisher o5msg.Publisher
+}
+
+func NewGenericTopicPublisher(publisher o5msg.Publisher) *GenericTopicPublisher {
+	publisher.Register(o5msg.TopicDescriptor{
+		Service: "gestest.v1.topic.GenericTopic",
+		Methods: []o5msg.MethodDescriptor{
+			{
+				Name:    "Foo",
+				Message: (*FooMessage).ProtoReflect(nil).Descriptor(),
+			},
+		},
+	})
+	return &GenericTopicPublisher{publisher: publisher}
+}
+
+// Method: Foo
+
+func (send GenericTopicTxSender[C]) Foo(ctx context.Context, sendContext C, msg *FooMessage) error {
+	return send.sender.Send(ctx, sendContext, msg)
+}
+
+func (collect GenericTopicCollector[C]) Foo(sendContext C, msg *FooMessage) {
+	collect.collector.Collect(sendContext, msg)
+}
+
+func (publish GenericTopicPublisher) Foo(ctx context.Context, msg *FooMessage) error {
+	return publish.publisher.Publish(ctx, msg)
+}

@@ -17,7 +17,14 @@ entity Foo {
 	event Archive {
 	}
 
-	summary {
+	summary Summary {
 		field name string
+	}
+}
+
+topic Generic publish {
+	message Foo {
+		field fooId ! key:id62
+		field name ! string
 	}
 }

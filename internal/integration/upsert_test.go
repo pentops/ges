@@ -10,6 +10,7 @@ import (
 	"github.com/pentops/ges/internal/gen/gestest/v1/gestest_tpb"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_spb"
 	"github.com/pentops/ges/internal/gen/o5/ges/v1/ges_tpb"
+	"github.com/pentops/golib/gl"
 	"github.com/pentops/j5/gen/j5/messaging/v1/messaging_j5pb"
 	"github.com/pentops/j5/lib/id62"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,8 +18,7 @@ import (
 
 func TestUpsertCycle(t *testing.T) {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	flow, uu := NewUniverse(ctx, t)
 	defer flow.RunSteps(t)
@@ -93,7 +93,7 @@ func TestUpsertCycle(t *testing.T) {
 		t.MustMessage(uu.ReplayTopic.Upserts(ctx, &ges_tpb.UpsertsMessage{
 			QueueUrl:    "test-queue",
 			GrpcService: "gestest.v1.topic.FooSummaryTopic",
-			GrpcMethod:  "FooSummary",
+			GrpcMethod:  gl.Ptr("FooSummary"),
 		}))
 
 		out := uu.CaptureReplayUpserts(ctx, t)

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	ReplayEventPGChannel  = "replay_event_notification"
-	ReplayUpsertPGChannel = "replay_upsert_notification"
+	ReplayEventPGChannel   = "replay_event_notification"
+	ReplayUpsertPGChannel  = "replay_upsert_notification"
+	ReplayGenericPGChannel = "replay_generic_notification"
 )
 
 func ReplayListener(dsn string, sqs replay.SQS) (*replay.Listener, error) {
@@ -22,6 +23,9 @@ func ReplayListener(dsn string, sqs replay.SQS) (*replay.Listener, error) {
 	}, {
 		Name:     ReplayUpsertPGChannel,
 		Callback: replay.WrapPublisher(sqs, &UpsertReplay{}),
+	}, {
+		Name:     ReplayGenericPGChannel,
+		Callback: replay.WrapPublisher(sqs, &GenericReplay{}),
 	}})
 }
 
@@ -52,6 +56,13 @@ func (rr *ReplayWorker) Events(ctx context.Context, req *ges_tpb.EventsMessage) 
 
 func (rr *ReplayWorker) Upserts(ctx context.Context, req *ges_tpb.UpsertsMessage) (*emptypb.Empty, error) {
 	if err := queueUpsertEvents(ctx, rr.db, req); err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (rr *ReplayWorker) Generic(ctx context.Context, req *ges_tpb.GenericMessage) (*emptypb.Empty, error) {
+	if err := queueGenericMessages(ctx, rr.db, req); err != nil {
 		return nil, err
 	}
 	return &emptypb.Empty{}, nil

@@ -25,7 +25,7 @@ type MessageQuery[T Message] interface {
 	SelectQuery() string
 
 	// DeleteQuery returns the SQL query to delete successfully published messages from the table.
-	DeleteQuery([]T) (string, []interface{}, error)
+	DeleteQuery([]T) (string, []any, error)
 
 	// ScanRow scans a row from the DB result into a message wrapper
 	ScanRow(row Row) (T, error)

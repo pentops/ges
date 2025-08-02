@@ -19,18 +19,17 @@ import (
 	"github.com/pentops/log.go/log"
 	"github.com/pentops/o5-messaging/gen/o5/messaging/v1/messaging_pb"
 	"github.com/pentops/sqrlx.go/sqrlx"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func reconstructEvent(event *ges_pb.Event) (*messaging_pb.Message, error) {
 
 	type ReconstructedEvent struct {
-		Metadata json.RawMessage        `json:"metadata"`
-		Keys     json.RawMessage        `json:"keys"`
-		Event    map[string]interface{} `json:"event"`
-		Data     json.RawMessage        `json:"data"`
-		Status   string                 `json:"status"`
+		Metadata json.RawMessage `json:"metadata"`
+		Keys     json.RawMessage `json:"keys"`
+		Event    map[string]any  `json:"event"`
+		Data     json.RawMessage `json:"data"`
+		Status   string          `json:"status"`
 	}
 
 	metadata, err := j5codec.Global.ProtoToJSON(event.Metadata.ProtoReflect())
@@ -43,7 +42,7 @@ func reconstructEvent(event *ges_pb.Event) (*messaging_pb.Message, error) {
 		Keys:     event.EntityKeys.J5Json,
 		Data:     event.EntityState.J5Json,
 		Status:   event.EntityStatus,
-		Event: map[string]interface{}{
+		Event: map[string]any{
 			event.EventType: json.RawMessage(event.EventData.J5Json),
 			"!type":         event.EventType,
 		},
@@ -174,12 +173,12 @@ func storeEvent(ctx context.Context, db sqrlx.Transactor, msg *messaging_pb.Mess
 		return fmt.Errorf("failed to parse event: %w", err)
 	}
 
-	eventData, err := protojson.Marshal(event)
+	eventData, err := j5codec.Global.ProtoToJSON(event.ProtoReflect())
 	if err != nil {
 		return fmt.Errorf("failed to marshal event: %w", err)
 	}
 
-	log.WithFields(ctx, map[string]interface{}{
+	log.WithFields(ctx, map[string]any{
 		"eventId":        event.Metadata.EventId,
 		"eventTimestamp": event.Metadata.Timestamp.AsTime(),
 		"entityName":     event.EntityName,
@@ -222,14 +221,14 @@ func queueReplayEvents(ctx context.Context, db sqrlx.Transactor, req *ges_tpb.Ev
 		Column("id").
 		Column("?", req.QueueUrl).
 		From("event").
-		Where("grpc_method = ?", req.GrpcMethod).
-		Where("grpc_service = ?", req.GrpcService)
+		Where("grpc_service = ?", req.GrpcService).
+		Where("grpc_method = ?", req.GrpcMethod)
 
 	ins := sq.Insert("replay_event").
 		Columns("replay_id", "event_id", "queue_url").
 		Select(sel)
 
-	log.WithFields(ctx, map[string]interface{}{
+	log.WithFields(ctx, map[string]any{
 		"queueUrl":    req.QueueUrl,
 		"grpcService": req.GrpcService,
 		"grpcMethod":  req.GrpcMethod,
@@ -259,19 +258,19 @@ func (eq *EventReplay) ScanRow(row replay.Row) (*eventRow, error) {
 		return nil, fmt.Errorf("error scanning outbox row: %w", err)
 	}
 	outboxRow.message = &ges_pb.Event{}
-	err = protojson.Unmarshal(dataBytes, outboxRow.message)
+	err = j5codec.Global.JSONToProto(dataBytes, outboxRow.message.ProtoReflect())
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling event data: %w", err)
 	}
 	return &outboxRow, nil
 }
 
-func (eq *EventReplay) DeleteQuery(rows []*eventRow) (string, []interface{}, error) {
+func (eq *EventReplay) DeleteQuery(rows []*eventRow) (string, []any, error) {
 	ids := make([]string, len(rows))
 	for i, row := range rows {
 		ids[i] = row.id
 	}
-	return "DELETE FROM replay_event WHERE replay_id = ANY($1)", []interface{}{
+	return "DELETE FROM replay_event WHERE replay_id = ANY($1)", []any{
 		pq.StringArray(ids),
 	}, nil
 }

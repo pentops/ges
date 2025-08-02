@@ -46,7 +46,7 @@ func (ww *EventWorker) storeGeneric(ctx context.Context, req *messaging_tpb.Gene
 		return fmt.Errorf("GES requires J5_JSON encoding, got %v", req.Message.Body.Encoding)
 	}
 
-	switch ext := req.Message.Extension.(type) {
+	switch req.Message.Extension.(type) {
 	case *messaging_pb.Message_Event_:
 		return storeEvent(ctx, ww.db, req.Message)
 
@@ -54,6 +54,6 @@ func (ww *EventWorker) storeGeneric(ctx context.Context, req *messaging_tpb.Gene
 		return storeUpsert(ctx, ww.db, req.Message)
 
 	default:
-		return fmt.Errorf("unexpected message extension: %T", ext)
+		return storeGeneric(ctx, ww.db, req.Message)
 	}
 }

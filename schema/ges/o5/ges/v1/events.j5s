@@ -2,6 +2,8 @@ package o5.ges.v1
 
 import j5.state.v1:psm
 
+import o5.messaging.v1:messaging
+
 service Query {
 
 	basePath = "/ges/v1"
@@ -9,14 +11,13 @@ service Query {
 	method EventsList {
 		httpMethod = "GET"
 		httpPath = "/events"
+		paged = true
+		query = true
 
 		request {
-			field page object:j5.list.v1.PageRequest
-			field query object:j5.list.v1.QueryRequest
 		}
 
 		response {
-			field page object:j5.list.v1.PageResponse
 			field events array:object:Event
 		}
 	}
@@ -24,48 +25,74 @@ service Query {
 	method UpsertList {
 		httpMethod = "GET"
 		httpPath = "/upsert"
+		paged = true
+		query = true
 
 		request {
-			field page object:j5.list.v1.PageRequest
-			field query object:j5.list.v1.QueryRequest
 		}
 
 		response {
-			field page object:j5.list.v1.PageResponse
 			field events array:object:Upsert
 		}
 	}
+
+	method GenericList {
+		httpMethod = "GET"
+		httpPath = "/generic"
+		paged = true
+		query = true
+		request {
+		}
+		response {
+			field events array:object:messaging.Message
+		}
+	}
+
 }
 
 service Command {
 	basePath = "/ges/v1"
-    method ReplayEvents {
-        httpMethod = "POST"
-        httpPath = "/events/replay"
+	method ReplayEvents {
+		httpMethod = "POST"
+		httpPath = "/events/replay"
 
-        request {
-            field queueURL ! string
-            field grpcService ! string
-            field grpcMethod ! string
-        }
+		request {
+			field queueURL ! string
+			field grpcService ! string
+			field grpcMethod ! string
+		}
 
-        response {
-        }
-    }
+		response {
+		}
+	}
 
-    method ReplayUpserts { 
-        httpMethod = "POST"
-        httpPath = "/upserts/replay"
+	method ReplayUpserts {
+		httpMethod = "POST"
+		httpPath = "/upserts/replay"
 
-        request {
-            field queueURL ! string
-            field grpcService ! string
-            field grpcMethod ! string
-        }
+		request {
+			field queueURL ! string
+			field grpcService ! string
+			field grpcMethod ? string
+		}
 
-        response {
-        }
-    }
+		response {
+		}
+	}
+
+	method ReplayGeneric {
+		httpMethod = "POST"
+		httpPath = "/generic/replay"
+
+		request {
+			field queueURL ! string
+			field grpcService ! string
+			field grpcMethod ? string
+		}
+
+		response {
+		}
+	}
 
 }
 
@@ -79,7 +106,13 @@ topic Replay publish {
 	message Upserts {
 		field queueURL ! string
 		field grpcService ! string
-		field grpcMethod ! string
+		field grpcMethod ? string
+	}
+
+	message Generic {
+		field queueURL ! string
+		field grpcService ! string
+		field grpcMethod ? string
 	}
 
 }

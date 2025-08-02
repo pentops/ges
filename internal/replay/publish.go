@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/pentops/golib/gl"
+	"github.com/pentops/j5/lib/j5codec"
 	"github.com/pentops/log.go/log"
 	"github.com/pentops/o5-messaging/gen/o5/messaging/v1/messaging_pb"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type SQS interface {
@@ -41,7 +41,7 @@ func (mb messageBatches[T]) addRow(row T) error {
 		log.WithError(context.Background(), err).Error("failed to get message")
 
 	}
-	messageBody, err := protojson.Marshal(msg)
+	messageBody, err := j5codec.Global.ProtoToJSON(msg.ProtoReflect())
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}

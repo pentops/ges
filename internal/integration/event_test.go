@@ -16,8 +16,7 @@ import (
 
 func TestEventCycle(t *testing.T) {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	flow, uu := NewUniverse(ctx, t)
 	defer flow.RunSteps(t)

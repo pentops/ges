@@ -21,7 +21,6 @@ import (
 	"github.com/pentops/o5-messaging/outbox/outboxtest"
 	"github.com/pentops/pgtest.go/pgtest"
 	"github.com/pentops/sqrlx.go/sqrlx"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -115,6 +114,11 @@ func (uu *Universe) CaptureReplayUpserts(ctx context.Context, t flowtest.TB) []*
 	return captureReplay(ctx, t, uu.DB, &service.UpsertReplay{})
 }
 
+func (uu *Universe) CaptureReplayGeneric(ctx context.Context, t flowtest.TB) []*messaging_pb.Message {
+	t.Helper()
+	return captureReplay(ctx, t, uu.DB, &service.GenericReplay{})
+}
+
 func captureReplay[T replay.Message](ctx context.Context, t flowtest.TB, db sqrlx.Transactor, query replay.MessageQuery[T]) []*messaging_pb.Message {
 	t.Helper()
 
@@ -137,7 +141,7 @@ func captureReplay[T replay.Message](ctx context.Context, t flowtest.TB, db sqrl
 	for _, send := range capture.sends {
 		for _, entry := range send.Entries {
 			msg := &messaging_pb.Message{}
-			err := protojson.Unmarshal([]byte(*entry.MessageBody), msg)
+			err := j5codec.Global.JSONToProto([]byte(*entry.MessageBody), msg.ProtoReflect())
 			if err != nil {
 				t.Fatalf("failed to unmarshal message: %v", err)
 			}
